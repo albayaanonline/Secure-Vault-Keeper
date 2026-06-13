@@ -1,0 +1,10 @@
+{
+  "buildCommand": "pnpm --filter @workspace/my-secrets run build",
+  "outputDirectory": "artifacts/my-secrets/dist/public",
+  "installCommand": "pnpm install",
+  "framework": "vite",
+  "env": {
+    "NODE_ENV": "production",
+    "BASE_PATH": "/"
+  }
+}
