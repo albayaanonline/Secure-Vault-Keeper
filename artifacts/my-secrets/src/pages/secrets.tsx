@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { AddSecretModal } from "@/components/AddSecretModal";
-import { useListSecrets, useDeleteSecret, useToggleFavoriteSecret, getListSecretsQueryKey } from "@workspace/api-client-react";
+import { useListSecrets, useDeleteSecret, useToggleFavoriteSecret, getListSecretsQueryKey, useListCategories } from "@workspace/api-client-react";
 import { Lock, Search, Plus, Star, Trash2, MoreVertical, Eye, Key, StickyNote } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
@@ -18,6 +18,7 @@ export default function Secrets() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
+  useListCategories(); // pre-warm cache so AddSecretModal has categories ready instantly
   const { data: secrets } = useListSecrets({ search: search || undefined });
   const deleteSecret = useDeleteSecret();
   const toggleFavorite = useToggleFavoriteSecret();

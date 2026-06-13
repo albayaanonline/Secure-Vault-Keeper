@@ -1,5 +1,5 @@
-import React, { useState, useRef } from "react";
-import { X, Lock, Key, FileText, StickyNote, Upload, Eye, EyeOff, Plus, HardDrive } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { X, Lock, Key, StickyNote, Upload, Eye, EyeOff, Plus, HardDrive } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   useCreateSecret,
@@ -31,7 +31,7 @@ export function AddSecretModal({ open, onClose, defaultType = "password" }: AddS
   const [title, setTitle] = useState("");
   const [value, setValue] = useState("");
   const [description, setDescription] = useState("");
-  const [categoryId, setCategoryId] = useState<number | "">("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [tags, setTags] = useState("");
   const [showValue, setShowValue] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -39,19 +39,27 @@ export function AddSecretModal({ open, onClose, defaultType = "password" }: AddS
 
   const pendingUploads = useRef<Map<string, { objectPath: string; name: string; contentType: string; size: number }>>(new Map());
 
-  const { data: categories, isLoading: categoriesLoading } = useListCategories();
+  const { data: categories } = useListCategories();
   const createSecret = useCreateSecret();
   const createVaultFile = useCreateVaultFile();
 
-  // Auto-select first category once loaded
-  React.useEffect(() => {
-    if (categories && categories.length > 0 && categoryId === "") {
-      setCategoryId(categories[0].id);
+  // Every time the modal opens OR categories finish loading, sync the selected category
+  useEffect(() => {
+    if (open && categories && categories.length > 0 && selectedCategoryId === null) {
+      setSelectedCategoryId(categories[0].id);
     }
-  }, [categories]);
+  }, [open, categories]);
 
   const reset = () => {
-    setTitle(""); setValue(""); setDescription(""); setCategoryId(""); setTags(""); setError(""); setSaving(false); setShowValue(false);
+    setTitle("");
+    setValue("");
+    setDescription("");
+    setSelectedCategoryId(null);
+    setTags("");
+    setError("");
+    setSaving(false);
+    setShowValue(false);
+    setType(defaultType);
   };
 
   const handleClose = () => { reset(); onClose(); };
@@ -68,7 +76,17 @@ export function AddSecretModal({ open, onClose, defaultType = "password" }: AddS
       const meta = pendingUploads.current.get(uppyFile.id);
       if (!meta) continue;
       pendingUploads.current.delete(uppyFile.id);
-      createVaultFile.mutate({ data: { name: meta.name, originalName: meta.name, objectPath: meta.objectPath, contentType: meta.contentType, size: meta.size, description, tags: tags.split(",").map(t => t.trim()).filter(Boolean) } }, {
+      createVaultFile.mutate({
+        data: {
+          name: meta.name,
+          originalName: meta.name,
+          objectPath: meta.objectPath,
+          contentType: meta.contentType,
+          size: meta.size,
+          description,
+          tags: tags.split(",").map(t => t.trim()).filter(Boolean),
+        }
+      }, {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListVaultFilesQueryKey() });
           handleClose();
@@ -82,20 +100,21 @@ export function AddSecretModal({ open, onClose, defaultType = "password" }: AddS
     if (!title.trim()) { setError("Title is required"); return; }
     if (type !== "file" && !value.trim()) { setError("Value is required"); return; }
 
-    // categoryId must be a valid number from the loaded categories
-    const resolvedCatId = categoryId !== "" ? Number(categoryId) : (categories?.[0]?.id ?? null);
-    if (!resolvedCatId) {
-      setError("Please select a category (still loading...)");
+    // Resolve categoryId: use selected, or fall back to first available category
+    const catId = selectedCategoryId ?? categories?.[0]?.id ?? null;
+    if (!catId) {
+      setError("Categories are loading, please wait a second and try again.");
       return;
     }
 
-    setSaving(true); setError("");
+    setSaving(true);
+    setError("");
 
     createSecret.mutate({
       data: {
         title: title.trim(),
         encryptedValue: value,
-        categoryId: resolvedCatId,
+        categoryId: catId,
         description: description.trim(),
         tags: tags.split(",").map(t => t.trim()).filter(Boolean),
       }
@@ -106,7 +125,7 @@ export function AddSecretModal({ open, onClose, defaultType = "password" }: AddS
         handleClose();
       },
       onError: (err: any) => {
-        const msg = err?.response?.data?.error || err?.message || "Failed to save. Try again.";
+        const msg = err?.response?.data?.error || err?.message || "Failed to save. Please try again.";
         setError(msg);
         setSaving(false);
       },
@@ -114,12 +133,19 @@ export function AddSecretModal({ open, onClose, defaultType = "password" }: AddS
   };
 
   const selectedType = SECRET_TYPES.find(t => t.id === type) || SECRET_TYPES[0];
+  const categoriesReady = !!categories?.length;
 
   return (
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={handleClose} />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={handleClose}
+          />
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -134,7 +160,10 @@ export function AddSecretModal({ open, onClose, defaultType = "password" }: AddS
                 </div>
                 <h2 className="text-base font-semibold text-white">Add New Secret</h2>
               </div>
-              <button onClick={handleClose} className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
+              <button
+                onClick={handleClose}
+                className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -169,7 +198,12 @@ export function AddSecretModal({ open, onClose, defaultType = "password" }: AddS
                   autoFocus
                   value={title}
                   onChange={e => setTitle(e.target.value)}
-                  placeholder={type === "password" ? "e.g. Gmail Password" : type === "api-key" ? "e.g. OpenAI API Key" : type === "note" ? "e.g. Bank PIN" : "e.g. My Resume"}
+                  placeholder={
+                    type === "password" ? "e.g. Gmail Password"
+                    : type === "api-key" ? "e.g. OpenAI API Key"
+                    : type === "note" ? "e.g. Bank PIN"
+                    : "e.g. My Resume"
+                  }
                   className="w-full bg-slate-900/50 border border-cyan-900/30 rounded-lg px-3 py-2.5 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30"
                 />
               </div>
@@ -213,7 +247,11 @@ export function AddSecretModal({ open, onClose, defaultType = "password" }: AddS
                           placeholder={selectedType.placeholder}
                           className="w-full bg-slate-900/50 border border-cyan-900/30 rounded-lg px-3 py-2.5 pr-10 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 font-mono"
                         />
-                        <button type="button" onClick={() => setShowValue(v => !v)} className="absolute right-3 top-2.5 text-slate-400 hover:text-white transition-colors">
+                        <button
+                          type="button"
+                          onClick={() => setShowValue(v => !v)}
+                          className="absolute right-3 top-2.5 text-slate-400 hover:text-white transition-colors"
+                        >
                           {showValue ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </>
@@ -222,21 +260,26 @@ export function AddSecretModal({ open, onClose, defaultType = "password" }: AddS
                 </div>
               )}
 
-              {/* Category + Tags (2 columns) */}
+              {/* Category + Tags */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-slate-400 uppercase tracking-wide mb-1.5 block">Category</label>
-                  <select
-                    value={categoryId}
-                    onChange={e => setCategoryId(e.target.value === "" ? "" : Number(e.target.value))}
-                    disabled={categoriesLoading}
-                    className="w-full bg-slate-900/50 border border-cyan-900/30 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500 disabled:opacity-50"
-                  >
-                    {categoriesLoading && <option value="">Loading...</option>}
-                    {categories?.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
+                  {!categoriesReady ? (
+                    <div className="w-full bg-slate-900/50 border border-cyan-900/30 rounded-lg px-3 py-2.5 text-slate-500 text-sm flex items-center gap-2">
+                      <span className="w-3 h-3 border-2 border-slate-600 border-t-cyan-500 rounded-full animate-spin" />
+                      Loading...
+                    </div>
+                  ) : (
+                    <select
+                      value={selectedCategoryId ?? ""}
+                      onChange={e => setSelectedCategoryId(Number(e.target.value))}
+                      className="w-full bg-slate-900/50 border border-cyan-900/30 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500"
+                    >
+                      {categories?.map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  )}
                 </div>
                 <div>
                   <label className="text-xs text-slate-400 uppercase tracking-wide mb-1.5 block">Tags</label>
@@ -251,7 +294,9 @@ export function AddSecretModal({ open, onClose, defaultType = "password" }: AddS
 
               {/* Description */}
               <div>
-                <label className="text-xs text-slate-400 uppercase tracking-wide mb-1.5 block">Description <span className="text-slate-600 normal-case">(optional)</span></label>
+                <label className="text-xs text-slate-400 uppercase tracking-wide mb-1.5 block">
+                  Description <span className="text-slate-600 normal-case">(optional)</span>
+                </label>
                 <input
                   value={description}
                   onChange={e => setDescription(e.target.value)}
@@ -264,22 +309,23 @@ export function AddSecretModal({ open, onClose, defaultType = "password" }: AddS
 
               {type !== "file" && (
                 <div className="flex gap-3 pt-1">
-                  <button type="button" onClick={handleClose} className="flex-1 py-2.5 rounded-lg border border-slate-700 text-slate-300 text-sm hover:bg-slate-800 transition-colors">
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    className="flex-1 py-2.5 rounded-lg border border-slate-700 text-slate-300 text-sm hover:bg-slate-800 transition-colors"
+                  >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    disabled={saving || categoriesLoading || !categories?.length}
+                    disabled={saving}
                     className="flex-1 py-2.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-semibold transition-colors shadow-[0_0_12px_rgba(6,182,212,0.3)] disabled:opacity-60 flex items-center justify-center gap-2"
                   >
-                    {saving ? (
-                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : categoriesLoading ? (
-                      <span className="w-4 h-4 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
-                    ) : (
-                      <Plus className="w-4 h-4" />
-                    )}
-                    {saving ? "Saving..." : categoriesLoading ? "Loading..." : "Save to Vault"}
+                    {saving
+                      ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      : <Plus className="w-4 h-4" />
+                    }
+                    {saving ? "Saving..." : "Save to Vault"}
                   </button>
                 </div>
               )}
