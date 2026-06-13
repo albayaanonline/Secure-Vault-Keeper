@@ -4,16 +4,8 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
-const isProduction = process.env.NODE_ENV === "production";
-
-const rawPort = process.env.PORT;
-const port = rawPort ? Number(rawPort) : 3000;
-
+const port = Number(process.env.PORT ?? "3000");
 const basePath = process.env.BASE_PATH ?? "/";
-
-if (!isProduction && !process.env.PORT) {
-  console.warn("PORT environment variable is not set, defaulting to 3000");
-}
 
 export default defineConfig({
   base: basePath,

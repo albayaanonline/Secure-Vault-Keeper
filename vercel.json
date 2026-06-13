@@ -3,8 +3,11 @@
   "outputDirectory": "artifacts/my-secrets/dist/public",
   "installCommand": "pnpm install",
   "framework": "vite",
-  "env": {
-    "NODE_ENV": "production",
-    "BASE_PATH": "/"
+  "build": {
+    "env": {
+      "NODE_ENV": "production",
+      "BASE_PATH": "/",
+      "PORT": "3000"
+    }
   }
 }
