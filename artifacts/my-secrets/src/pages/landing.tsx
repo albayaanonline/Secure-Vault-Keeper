@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "wouter";
-import { Lock, Shield, FileText, Eye, Zap } from "lucide-react";
+import { Lock, Shield, FileText, Eye } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Landing() {
@@ -11,7 +11,7 @@ export default function Landing() {
 
       <header className="container mx-auto px-6 py-6 flex justify-between items-center relative z-10">
         <div className="flex items-center gap-2.5">
-          <img src="/logo.svg" alt="My Secrets" className="w-9 h-9" />
+          <img src="/logo.jpg" alt="My Secrets" className="w-9 h-9 rounded-lg object-cover" />
           <span className="text-xl font-bold tracking-tight">My Secrets</span>
         </div>
         <div className="flex gap-4">
@@ -36,7 +36,11 @@ export default function Landing() {
           </div>
 
           <div className="flex justify-center mb-8">
-            <img src="/logo.svg" alt="Vault" className="w-24 h-24 drop-shadow-[0_0_24px_rgba(6,182,212,0.5)]" />
+            <img
+              src="/logo.jpg"
+              alt="Vault"
+              className="w-28 h-28 rounded-2xl object-cover shadow-[0_0_40px_rgba(6,182,212,0.4)] border border-cyan-500/30"
+            />
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-400">
@@ -44,7 +48,7 @@ export default function Landing() {
           </h1>
 
           <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-            The encrypted vault for power users. Store passwords, files, and sensitive data with AES-256-GCM client-side encryption and zero compromises.
+            The encrypted vault for power users. Store passwords, files, and sensitive data with AES-256-GCM encryption and zero compromises.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">

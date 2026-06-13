@@ -19,7 +19,7 @@ export function Sidebar() {
   return (
     <div className="w-64 bg-[#0D1526] border-r border-cyan-900/30 flex flex-col h-screen fixed left-0 top-0">
       <div className="p-6 flex items-center gap-3">
-        <img src="/logo.svg" alt="My Secrets" className="w-9 h-9" />
+        <img src="/logo.jpg" alt="My Secrets" className="w-9 h-9 rounded-lg object-cover" />
         <span className="text-xl font-bold tracking-tight text-white">My Secrets</span>
       </div>
 
