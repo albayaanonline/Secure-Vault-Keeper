@@ -366,3 +366,171 @@ export const GetSecurityScoreResponse = zod.object({
 })
 
 
+/**
+ * @summary Request a presigned URL for file upload
+ */
+
+
+
+
+
+export const RequestUploadUrlBody = zod.object({
+  "name": zod.string().min(1),
+  "size": zod.number().min(1),
+  "contentType": zod.string().min(1)
+})
+
+export const RequestUploadUrlResponse = zod.object({
+  "uploadURL": zod.string().url(),
+  "objectPath": zod.string()
+})
+
+
+/**
+ * @summary Serve a public asset
+ */
+export const GetPublicObjectParams = zod.object({
+  "filePath": zod.coerce.string()
+})
+
+
+/**
+ * @summary Serve a private object
+ */
+export const GetStorageObjectParams = zod.object({
+  "objectPath": zod.coerce.string()
+})
+
+
+/**
+ * @summary List vault files (metadata only)
+ */
+export const ListVaultFilesQueryParams = zod.object({
+  "search": zod.coerce.string().optional(),
+  "contentType": zod.coerce.string().optional(),
+  "favorite": zod.coerce.boolean().optional()
+})
+
+export const ListVaultFilesResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "originalName": zod.string(),
+  "objectPath": zod.string(),
+  "contentType": zod.string(),
+  "size": zod.number(),
+  "description": zod.string().nullish(),
+  "tags": zod.array(zod.string()).optional(),
+  "isFavorite": zod.boolean(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+export const ListVaultFilesResponse = zod.array(ListVaultFilesResponseItem)
+
+
+/**
+ * @summary Register an uploaded file in the vault
+ */
+export const CreateVaultFileBody = zod.object({
+  "name": zod.string(),
+  "originalName": zod.string(),
+  "objectPath": zod.string(),
+  "contentType": zod.string(),
+  "size": zod.number(),
+  "description": zod.string().optional(),
+  "tags": zod.array(zod.string()).optional(),
+  "encryptedKey": zod.string().optional()
+})
+
+
+/**
+ * @summary Get a vault file record
+ */
+export const GetVaultFileParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetVaultFileResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "originalName": zod.string(),
+  "objectPath": zod.string(),
+  "contentType": zod.string(),
+  "size": zod.number(),
+  "description": zod.string().nullish(),
+  "tags": zod.array(zod.string()).optional(),
+  "isFavorite": zod.boolean(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Update vault file metadata
+ */
+export const UpdateVaultFileParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateVaultFileBody = zod.object({
+  "name": zod.string().optional(),
+  "description": zod.string().optional(),
+  "tags": zod.array(zod.string()).optional()
+})
+
+export const UpdateVaultFileResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "originalName": zod.string(),
+  "objectPath": zod.string(),
+  "contentType": zod.string(),
+  "size": zod.number(),
+  "description": zod.string().nullish(),
+  "tags": zod.array(zod.string()).optional(),
+  "isFavorite": zod.boolean(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Delete a vault file
+ */
+export const DeleteVaultFileParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
+ * @summary Toggle favorite status of a vault file
+ */
+export const ToggleFavoriteVaultFileParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ToggleFavoriteVaultFileResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "originalName": zod.string(),
+  "objectPath": zod.string(),
+  "contentType": zod.string(),
+  "size": zod.number(),
+  "description": zod.string().nullish(),
+  "tags": zod.array(zod.string()).optional(),
+  "isFavorite": zod.boolean(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Get a signed download URL for a vault file
+ */
+export const GetVaultFileDownloadUrlParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetVaultFileDownloadUrlResponse = zod.object({
+  "url": zod.string()
+})
+
+

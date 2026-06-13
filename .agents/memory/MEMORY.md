@@ -1,0 +1,3 @@
+- [Object storage upload flow](object-storage-upload.md) — ObjectUploader takes `children` + `buttonClassName`, NOT a `renderButton` prop; onComplete receives `UploadResult`, not `(result, file)`.
+- [Uppy file size nullability](uppy-file-size.md) — `UppyFile.size` is `number | null`; always use `file.size ?? 0` before passing to APIs that expect `number`.
+- [requestUploadUrl call shape](request-upload-url.md) — generated hook takes flat `{ name, size, contentType }`, NOT wrapped in `{ data: {...} }`; response field is `uploadURL` (capital URL), not `uploadUrl`.

@@ -1,5 +1,5 @@
 import React from "react";
-import { Shield, Lock, Activity, LayoutDashboard, Key, LogOut } from "lucide-react";
+import { Shield, Lock, Activity, LayoutDashboard, Key, LogOut, HardDrive } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useClerk } from "@clerk/react";
 
@@ -10,6 +10,7 @@ export function Sidebar() {
   const links = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/secrets", label: "Vault", icon: Lock },
+    { href: "/file-vault", label: "File Vault", icon: HardDrive },
     { href: "/categories", label: "Categories", icon: Key },
     { href: "/activity", label: "Activity", icon: Activity },
     { href: "/settings", label: "Settings", icon: Shield },

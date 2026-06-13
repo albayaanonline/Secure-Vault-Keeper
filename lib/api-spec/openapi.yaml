@@ -20,6 +20,10 @@ tags:
     description: Activity logs
   - name: dashboard
     description: Dashboard stats and summaries
+  - name: storage
+    description: Object storage upload and serving endpoints
+  - name: vault-files
+    description: Encrypted file vault management
 
 paths:
   /healthz:
@@ -406,6 +410,255 @@ paths:
               schema:
                 $ref: "#/components/schemas/SecurityScore"
 
+  # Object storage presigned upload
+  /storage/uploads/request-url:
+    post:
+      tags: [storage]
+      operationId: requestUploadUrl
+      summary: Request a presigned URL for file upload
+      security:
+        - clerkAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadUrlRequest"
+      responses:
+        "200":
+          description: Presigned upload URL generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUrlResponse"
+        "400":
+          description: Missing or invalid required fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Failed to generate upload URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /storage/public-objects/{filePath}:
+    get:
+      tags: [storage]
+      operationId: getPublicObject
+      summary: Serve a public asset
+      parameters:
+        - name: filePath
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Object content
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /storage/objects/{objectPath}:
+    get:
+      tags: [storage]
+      operationId: getStorageObject
+      summary: Serve a private object
+      security:
+        - clerkAuth: []
+      parameters:
+        - name: objectPath
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Object content
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  # Vault files
+  /vault-files:
+    get:
+      operationId: listVaultFiles
+      tags: [vault-files]
+      summary: List vault files (metadata only)
+      security:
+        - clerkAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: contentType
+          in: query
+          schema:
+            type: string
+        - name: favorite
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of vault files
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VaultFile"
+    post:
+      operationId: createVaultFile
+      tags: [vault-files]
+      summary: Register an uploaded file in the vault
+      security:
+        - clerkAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VaultFileInput"
+      responses:
+        "201":
+          description: Created vault file record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultFile"
+
+  /vault-files/{id}:
+    get:
+      operationId: getVaultFile
+      tags: [vault-files]
+      summary: Get a vault file record
+      security:
+        - clerkAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Vault file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultFile"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateVaultFile
+      tags: [vault-files]
+      summary: Update vault file metadata
+      security:
+        - clerkAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VaultFileUpdate"
+      responses:
+        "200":
+          description: Updated vault file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultFile"
+    delete:
+      operationId: deleteVaultFile
+      tags: [vault-files]
+      summary: Delete a vault file
+      security:
+        - clerkAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /vault-files/{id}/favorite:
+    patch:
+      operationId: toggleFavoriteVaultFile
+      tags: [vault-files]
+      summary: Toggle favorite status of a vault file
+      security:
+        - clerkAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated vault file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultFile"
+
+  /vault-files/{id}/download-url:
+    get:
+      operationId: getVaultFileDownloadUrl
+      tags: [vault-files]
+      summary: Get a signed download URL for a vault file
+      security:
+        - clerkAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Signed download URL
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url]
+                properties:
+                  url:
+                    type: string
+        "404":
+          description: Not found
+
 components:
   securitySchemes:
     clerkAuth:
@@ -683,3 +936,98 @@ components:
           type: integer
         description:
           type: string
+
+    UploadUrlRequest:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        size:
+          type: integer
+          minimum: 1
+        contentType:
+          type: string
+          minLength: 1
+
+    UploadUrlResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL:
+          type: string
+          format: uri
+        objectPath:
+          type: string
+
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    VaultFile:
+      type: object
+      required: [id, name, originalName, objectPath, contentType, size, isFavorite, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        originalName:
+          type: string
+        objectPath:
+          type: string
+        contentType:
+          type: string
+        size:
+          type: integer
+        description:
+          type: ["string", "null"]
+        tags:
+          type: array
+          items:
+            type: string
+        isFavorite:
+          type: boolean
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    VaultFileInput:
+      type: object
+      required: [name, objectPath, contentType, size, originalName]
+      properties:
+        name:
+          type: string
+        originalName:
+          type: string
+        objectPath:
+          type: string
+        contentType:
+          type: string
+        size:
+          type: integer
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        encryptedKey:
+          type: string
+
+    VaultFileUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string

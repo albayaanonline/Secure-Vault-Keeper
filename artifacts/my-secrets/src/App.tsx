@@ -14,6 +14,7 @@ import NewSecret from "@/pages/new-secret";
 import Settings from "@/pages/settings";
 import Activity from "@/pages/activity";
 import Categories from "@/pages/categories";
+import FileVault from "@/pages/file-vault";
 
 const clerkPubKey = publishableKeyFromHost(
   window.location.hostname,
@@ -190,6 +191,9 @@ function ClerkProviderWithRoutes() {
             </Route>
             <Route path="/categories">
               <ProtectedRoute component={Categories} />
+            </Route>
+            <Route path="/file-vault">
+              <ProtectedRoute component={FileVault} />
             </Route>
             {/* Other routes can be added here */}
             <Route>

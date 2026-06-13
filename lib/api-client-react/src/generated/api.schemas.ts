@@ -155,6 +155,56 @@ export interface SecurityScore {
   checks: SecurityCheck[];
 }
 
+export interface UploadUrlRequest {
+  /** @minLength 1 */
+  name: string;
+  /** @minimum 1 */
+  size: number;
+  /** @minLength 1 */
+  contentType: string;
+}
+
+export interface UploadUrlResponse {
+  uploadURL: string;
+  objectPath: string;
+}
+
+export interface ErrorEnvelope {
+  error: string;
+}
+
+export interface VaultFile {
+  id: number;
+  name: string;
+  originalName: string;
+  objectPath: string;
+  contentType: string;
+  size: number;
+  /** @nullable */
+  description?: string | null;
+  tags?: string[];
+  isFavorite: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VaultFileInput {
+  name: string;
+  originalName: string;
+  objectPath: string;
+  contentType: string;
+  size: number;
+  description?: string;
+  tags?: string[];
+  encryptedKey?: string;
+}
+
+export interface VaultFileUpdate {
+  name?: string;
+  description?: string;
+  tags?: string[];
+}
+
 export type ListSecretsParams = {
 category?: string;
 search?: string;
@@ -166,5 +216,15 @@ favorite?: boolean;
 export type ListActivityParams = {
 limit?: number;
 offset?: number;
+};
+
+export type ListVaultFilesParams = {
+search?: string;
+contentType?: string;
+favorite?: boolean;
+};
+
+export type GetVaultFileDownloadUrl200 = {
+  url: string;
 };
 

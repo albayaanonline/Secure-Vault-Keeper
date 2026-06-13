@@ -25,16 +25,24 @@ import type {
   CategoryInput,
   CategoryUpdate,
   DashboardStats,
+  ErrorEnvelope,
+  GetVaultFileDownloadUrl200,
   HealthStatus,
   ListActivityParams,
   ListSecretsParams,
+  ListVaultFilesParams,
   Secret,
   SecretInput,
   SecretMeta,
   SecretUpdate,
   SecurityScore,
+  UploadUrlRequest,
+  UploadUrlResponse,
   UserProfile,
-  UserProfileUpdate
+  UserProfileUpdate,
+  VaultFile,
+  VaultFileInput,
+  VaultFileUpdate
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -1451,6 +1459,752 @@ export function useGetSecurityScore<TData = Awaited<ReturnType<typeof getSecurit
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetSecurityScoreQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getRequestUploadUrlUrl = () => {
+
+
+
+
+  return `/api/storage/uploads/request-url`
+}
+
+/**
+ * @summary Request a presigned URL for file upload
+ */
+export const requestUploadUrl = async (uploadUrlRequest: UploadUrlRequest, options?: RequestInit): Promise<UploadUrlResponse> => {
+
+  return customFetch<UploadUrlResponse>(getRequestUploadUrlUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      uploadUrlRequest,)
+  }
+);}
+
+
+
+
+export const getRequestUploadUrlMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestUploadUrl>>, TError,{data: BodyType<UploadUrlRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestUploadUrl>>, TError,{data: BodyType<UploadUrlRequest>}, TContext> => {
+
+const mutationKey = ['requestUploadUrl'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestUploadUrl>>, {data: BodyType<UploadUrlRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  requestUploadUrl(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestUploadUrlMutationResult = NonNullable<Awaited<ReturnType<typeof requestUploadUrl>>>
+    export type RequestUploadUrlMutationBody = BodyType<UploadUrlRequest>
+    export type RequestUploadUrlMutationError = ErrorType<ErrorEnvelope>
+
+    /**
+ * @summary Request a presigned URL for file upload
+ */
+export const useRequestUploadUrl = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestUploadUrl>>, TError,{data: BodyType<UploadUrlRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof requestUploadUrl>>,
+        TError,
+        {data: BodyType<UploadUrlRequest>},
+        TContext
+      > => {
+      return useMutation(getRequestUploadUrlMutationOptions(options));
+    }
+
+export const getGetPublicObjectUrl = (filePath: string,) => {
+
+
+
+
+  return `/api/storage/public-objects/${filePath}`
+}
+
+/**
+ * @summary Serve a public asset
+ */
+export const getPublicObject = async (filePath: string, options?: RequestInit): Promise<Blob> => {
+
+  return customFetch<Blob>(getGetPublicObjectUrl(filePath),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPublicObjectQueryKey = (filePath: string,) => {
+    return [
+    `/api/storage/public-objects/${filePath}`
+    ] as const;
+    }
+
+
+export const getGetPublicObjectQueryOptions = <TData = Awaited<ReturnType<typeof getPublicObject>>, TError = ErrorType<ErrorEnvelope>>(filePath: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicObject>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPublicObjectQueryKey(filePath);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicObject>>> = ({ signal }) => getPublicObject(filePath, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(filePath), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPublicObject>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPublicObjectQueryResult = NonNullable<Awaited<ReturnType<typeof getPublicObject>>>
+export type GetPublicObjectQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Serve a public asset
+ */
+
+export function useGetPublicObject<TData = Awaited<ReturnType<typeof getPublicObject>>, TError = ErrorType<ErrorEnvelope>>(
+ filePath: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicObject>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPublicObjectQueryOptions(filePath,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetStorageObjectUrl = (objectPath: string,) => {
+
+
+
+
+  return `/api/storage/objects/${objectPath}`
+}
+
+/**
+ * @summary Serve a private object
+ */
+export const getStorageObject = async (objectPath: string, options?: RequestInit): Promise<Blob> => {
+
+  return customFetch<Blob>(getGetStorageObjectUrl(objectPath),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetStorageObjectQueryKey = (objectPath: string,) => {
+    return [
+    `/api/storage/objects/${objectPath}`
+    ] as const;
+    }
+
+
+export const getGetStorageObjectQueryOptions = <TData = Awaited<ReturnType<typeof getStorageObject>>, TError = ErrorType<ErrorEnvelope>>(objectPath: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStorageObject>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetStorageObjectQueryKey(objectPath);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStorageObject>>> = ({ signal }) => getStorageObject(objectPath, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(objectPath), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getStorageObject>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetStorageObjectQueryResult = NonNullable<Awaited<ReturnType<typeof getStorageObject>>>
+export type GetStorageObjectQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Serve a private object
+ */
+
+export function useGetStorageObject<TData = Awaited<ReturnType<typeof getStorageObject>>, TError = ErrorType<ErrorEnvelope>>(
+ objectPath: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStorageObject>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetStorageObjectQueryOptions(objectPath,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListVaultFilesUrl = (params?: ListVaultFilesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/vault-files?${stringifiedParams}` : `/api/vault-files`
+}
+
+/**
+ * @summary List vault files (metadata only)
+ */
+export const listVaultFiles = async (params?: ListVaultFilesParams, options?: RequestInit): Promise<VaultFile[]> => {
+
+  return customFetch<VaultFile[]>(getListVaultFilesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListVaultFilesQueryKey = (params?: ListVaultFilesParams,) => {
+    return [
+    `/api/vault-files`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListVaultFilesQueryOptions = <TData = Awaited<ReturnType<typeof listVaultFiles>>, TError = ErrorType<unknown>>(params?: ListVaultFilesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listVaultFiles>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListVaultFilesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listVaultFiles>>> = ({ signal }) => listVaultFiles(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listVaultFiles>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListVaultFilesQueryResult = NonNullable<Awaited<ReturnType<typeof listVaultFiles>>>
+export type ListVaultFilesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List vault files (metadata only)
+ */
+
+export function useListVaultFiles<TData = Awaited<ReturnType<typeof listVaultFiles>>, TError = ErrorType<unknown>>(
+ params?: ListVaultFilesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listVaultFiles>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListVaultFilesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateVaultFileUrl = () => {
+
+
+
+
+  return `/api/vault-files`
+}
+
+/**
+ * @summary Register an uploaded file in the vault
+ */
+export const createVaultFile = async (vaultFileInput: VaultFileInput, options?: RequestInit): Promise<VaultFile> => {
+
+  return customFetch<VaultFile>(getCreateVaultFileUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      vaultFileInput,)
+  }
+);}
+
+
+
+
+export const getCreateVaultFileMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createVaultFile>>, TError,{data: BodyType<VaultFileInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createVaultFile>>, TError,{data: BodyType<VaultFileInput>}, TContext> => {
+
+const mutationKey = ['createVaultFile'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createVaultFile>>, {data: BodyType<VaultFileInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createVaultFile(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateVaultFileMutationResult = NonNullable<Awaited<ReturnType<typeof createVaultFile>>>
+    export type CreateVaultFileMutationBody = BodyType<VaultFileInput>
+    export type CreateVaultFileMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Register an uploaded file in the vault
+ */
+export const useCreateVaultFile = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createVaultFile>>, TError,{data: BodyType<VaultFileInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createVaultFile>>,
+        TError,
+        {data: BodyType<VaultFileInput>},
+        TContext
+      > => {
+      return useMutation(getCreateVaultFileMutationOptions(options));
+    }
+
+export const getGetVaultFileUrl = (id: number,) => {
+
+
+
+
+  return `/api/vault-files/${id}`
+}
+
+/**
+ * @summary Get a vault file record
+ */
+export const getVaultFile = async (id: number, options?: RequestInit): Promise<VaultFile> => {
+
+  return customFetch<VaultFile>(getGetVaultFileUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetVaultFileQueryKey = (id: number,) => {
+    return [
+    `/api/vault-files/${id}`
+    ] as const;
+    }
+
+
+export const getGetVaultFileQueryOptions = <TData = Awaited<ReturnType<typeof getVaultFile>>, TError = ErrorType<void>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getVaultFile>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetVaultFileQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVaultFile>>> = ({ signal }) => getVaultFile(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getVaultFile>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetVaultFileQueryResult = NonNullable<Awaited<ReturnType<typeof getVaultFile>>>
+export type GetVaultFileQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get a vault file record
+ */
+
+export function useGetVaultFile<TData = Awaited<ReturnType<typeof getVaultFile>>, TError = ErrorType<void>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getVaultFile>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetVaultFileQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getUpdateVaultFileUrl = (id: number,) => {
+
+
+
+
+  return `/api/vault-files/${id}`
+}
+
+/**
+ * @summary Update vault file metadata
+ */
+export const updateVaultFile = async (id: number,
+    vaultFileUpdate: VaultFileUpdate, options?: RequestInit): Promise<VaultFile> => {
+
+  return customFetch<VaultFile>(getUpdateVaultFileUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      vaultFileUpdate,)
+  }
+);}
+
+
+
+
+export const getUpdateVaultFileMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateVaultFile>>, TError,{id: number;data: BodyType<VaultFileUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateVaultFile>>, TError,{id: number;data: BodyType<VaultFileUpdate>}, TContext> => {
+
+const mutationKey = ['updateVaultFile'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateVaultFile>>, {id: number;data: BodyType<VaultFileUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateVaultFile(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateVaultFileMutationResult = NonNullable<Awaited<ReturnType<typeof updateVaultFile>>>
+    export type UpdateVaultFileMutationBody = BodyType<VaultFileUpdate>
+    export type UpdateVaultFileMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update vault file metadata
+ */
+export const useUpdateVaultFile = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateVaultFile>>, TError,{id: number;data: BodyType<VaultFileUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateVaultFile>>,
+        TError,
+        {id: number;data: BodyType<VaultFileUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateVaultFileMutationOptions(options));
+    }
+
+export const getDeleteVaultFileUrl = (id: number,) => {
+
+
+
+
+  return `/api/vault-files/${id}`
+}
+
+/**
+ * @summary Delete a vault file
+ */
+export const deleteVaultFile = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteVaultFileUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteVaultFileMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteVaultFile>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteVaultFile>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteVaultFile'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteVaultFile>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteVaultFile(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteVaultFileMutationResult = NonNullable<Awaited<ReturnType<typeof deleteVaultFile>>>
+
+    export type DeleteVaultFileMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a vault file
+ */
+export const useDeleteVaultFile = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteVaultFile>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteVaultFile>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteVaultFileMutationOptions(options));
+    }
+
+export const getToggleFavoriteVaultFileUrl = (id: number,) => {
+
+
+
+
+  return `/api/vault-files/${id}/favorite`
+}
+
+/**
+ * @summary Toggle favorite status of a vault file
+ */
+export const toggleFavoriteVaultFile = async (id: number, options?: RequestInit): Promise<VaultFile> => {
+
+  return customFetch<VaultFile>(getToggleFavoriteVaultFileUrl(id),
+  {
+    ...options,
+    method: 'PATCH'
+
+
+  }
+);}
+
+
+
+
+export const getToggleFavoriteVaultFileMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof toggleFavoriteVaultFile>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof toggleFavoriteVaultFile>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['toggleFavoriteVaultFile'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof toggleFavoriteVaultFile>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  toggleFavoriteVaultFile(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ToggleFavoriteVaultFileMutationResult = NonNullable<Awaited<ReturnType<typeof toggleFavoriteVaultFile>>>
+
+    export type ToggleFavoriteVaultFileMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Toggle favorite status of a vault file
+ */
+export const useToggleFavoriteVaultFile = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof toggleFavoriteVaultFile>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof toggleFavoriteVaultFile>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getToggleFavoriteVaultFileMutationOptions(options));
+    }
+
+export const getGetVaultFileDownloadUrlUrl = (id: number,) => {
+
+
+
+
+  return `/api/vault-files/${id}/download-url`
+}
+
+/**
+ * @summary Get a signed download URL for a vault file
+ */
+export const getVaultFileDownloadUrl = async (id: number, options?: RequestInit): Promise<GetVaultFileDownloadUrl200> => {
+
+  return customFetch<GetVaultFileDownloadUrl200>(getGetVaultFileDownloadUrlUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetVaultFileDownloadUrlQueryKey = (id: number,) => {
+    return [
+    `/api/vault-files/${id}/download-url`
+    ] as const;
+    }
+
+
+export const getGetVaultFileDownloadUrlQueryOptions = <TData = Awaited<ReturnType<typeof getVaultFileDownloadUrl>>, TError = ErrorType<void>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getVaultFileDownloadUrl>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetVaultFileDownloadUrlQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVaultFileDownloadUrl>>> = ({ signal }) => getVaultFileDownloadUrl(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getVaultFileDownloadUrl>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetVaultFileDownloadUrlQueryResult = NonNullable<Awaited<ReturnType<typeof getVaultFileDownloadUrl>>>
+export type GetVaultFileDownloadUrlQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get a signed download URL for a vault file
+ */
+
+export function useGetVaultFileDownloadUrl<TData = Awaited<ReturnType<typeof getVaultFileDownloadUrl>>, TError = ErrorType<void>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getVaultFileDownloadUrl>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetVaultFileDownloadUrlQueryOptions(id,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
