@@ -39,9 +39,16 @@ export function AddSecretModal({ open, onClose, defaultType = "password" }: AddS
 
   const pendingUploads = useRef<Map<string, { objectPath: string; name: string; contentType: string; size: number }>>(new Map());
 
-  const { data: categories } = useListCategories();
+  const { data: categories, isLoading: categoriesLoading } = useListCategories();
   const createSecret = useCreateSecret();
   const createVaultFile = useCreateVaultFile();
+
+  // Auto-select first category once loaded
+  React.useEffect(() => {
+    if (categories && categories.length > 0 && categoryId === "") {
+      setCategoryId(categories[0].id);
+    }
+  }, [categories]);
 
   const reset = () => {
     setTitle(""); setValue(""); setDescription(""); setCategoryId(""); setTags(""); setError(""); setSaving(false); setShowValue(false);
@@ -74,16 +81,21 @@ export function AddSecretModal({ open, onClose, defaultType = "password" }: AddS
     e.preventDefault();
     if (!title.trim()) { setError("Title is required"); return; }
     if (type !== "file" && !value.trim()) { setError("Value is required"); return; }
-    setSaving(true); setError("");
 
-    const firstCategory = categories?.[0];
-    const catId = categoryId !== "" ? Number(categoryId) : (firstCategory?.id ?? 1);
+    // categoryId must be a valid number from the loaded categories
+    const resolvedCatId = categoryId !== "" ? Number(categoryId) : (categories?.[0]?.id ?? null);
+    if (!resolvedCatId) {
+      setError("Please select a category (still loading...)");
+      return;
+    }
+
+    setSaving(true); setError("");
 
     createSecret.mutate({
       data: {
         title: title.trim(),
         encryptedValue: value,
-        categoryId: catId,
+        categoryId: resolvedCatId,
         description: description.trim(),
         tags: tags.split(",").map(t => t.trim()).filter(Boolean),
       }
@@ -93,7 +105,11 @@ export function AddSecretModal({ open, onClose, defaultType = "password" }: AddS
         setSaving(false);
         handleClose();
       },
-      onError: () => { setError("Failed to save. Try again."); setSaving(false); },
+      onError: (err: any) => {
+        const msg = err?.response?.data?.error || err?.message || "Failed to save. Try again.";
+        setError(msg);
+        setSaving(false);
+      },
     });
   };
 
@@ -213,9 +229,10 @@ export function AddSecretModal({ open, onClose, defaultType = "password" }: AddS
                   <select
                     value={categoryId}
                     onChange={e => setCategoryId(e.target.value === "" ? "" : Number(e.target.value))}
-                    className="w-full bg-slate-900/50 border border-cyan-900/30 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500"
+                    disabled={categoriesLoading}
+                    className="w-full bg-slate-900/50 border border-cyan-900/30 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500 disabled:opacity-50"
                   >
-                    <option value="">Auto-select</option>
+                    {categoriesLoading && <option value="">Loading...</option>}
                     {categories?.map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
@@ -252,11 +269,17 @@ export function AddSecretModal({ open, onClose, defaultType = "password" }: AddS
                   </button>
                   <button
                     type="submit"
-                    disabled={saving}
+                    disabled={saving || categoriesLoading || !categories?.length}
                     className="flex-1 py-2.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-semibold transition-colors shadow-[0_0_12px_rgba(6,182,212,0.3)] disabled:opacity-60 flex items-center justify-center gap-2"
                   >
-                    {saving ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Plus className="w-4 h-4" />}
-                    {saving ? "Saving..." : "Save to Vault"}
+                    {saving ? (
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : categoriesLoading ? (
+                      <span className="w-4 h-4 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+                    ) : (
+                      <Plus className="w-4 h-4" />
+                    )}
+                    {saving ? "Saving..." : categoriesLoading ? "Loading..." : "Save to Vault"}
                   </button>
                 </div>
               )}
