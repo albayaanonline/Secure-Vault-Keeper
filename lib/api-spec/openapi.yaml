@@ -3,20 +3,30 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: My Secrets - Premium Encrypted Vault API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: users
+    description: User management
+  - name: secrets
+    description: Secret vault operations
+  - name: categories
+    description: Secret categories
+  - name: activity
+    description: Activity logs
+  - name: dashboard
+    description: Dashboard stats and summaries
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,7 +34,384 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # User / profile
+  /users/me:
+    get:
+      operationId: getMe
+      tags: [users]
+      summary: Get current user profile
+      security:
+        - clerkAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized
+    patch:
+      operationId: updateMe
+      tags: [users]
+      summary: Update current user profile
+      security:
+        - clerkAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserProfileUpdate"
+      responses:
+        "200":
+          description: Updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  # Categories
+  /categories:
+    get:
+      operationId: listCategories
+      tags: [categories]
+      summary: List all categories
+      security:
+        - clerkAuth: []
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+    post:
+      operationId: createCategory
+      tags: [categories]
+      summary: Create a custom category
+      security:
+        - clerkAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryInput"
+      responses:
+        "201":
+          description: Created category
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+
+  /categories/{id}:
+    patch:
+      operationId: updateCategory
+      tags: [categories]
+      summary: Update a category
+      security:
+        - clerkAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryUpdate"
+      responses:
+        "200":
+          description: Updated category
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+    delete:
+      operationId: deleteCategory
+      tags: [categories]
+      summary: Delete a category
+      security:
+        - clerkAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # Secrets
+  /secrets:
+    get:
+      operationId: listSecrets
+      tags: [secrets]
+      summary: List secrets (metadata only, no values)
+      security:
+        - clerkAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: tag
+          in: query
+          schema:
+            type: string
+        - name: archived
+          in: query
+          schema:
+            type: boolean
+        - name: favorite
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of secrets (no encrypted values)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SecretMeta"
+    post:
+      operationId: createSecret
+      tags: [secrets]
+      summary: Create a new secret
+      security:
+        - clerkAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SecretInput"
+      responses:
+        "201":
+          description: Created secret
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Secret"
+
+  /secrets/{id}:
+    get:
+      operationId: getSecret
+      tags: [secrets]
+      summary: Get a single secret including encrypted value
+      security:
+        - clerkAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Secret with encrypted value
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Secret"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateSecret
+      tags: [secrets]
+      summary: Update a secret
+      security:
+        - clerkAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SecretUpdate"
+      responses:
+        "200":
+          description: Updated secret
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Secret"
+    delete:
+      operationId: deleteSecret
+      tags: [secrets]
+      summary: Delete a secret
+      security:
+        - clerkAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /secrets/{id}/favorite:
+    patch:
+      operationId: toggleFavoriteSecret
+      tags: [secrets]
+      summary: Toggle favorite status
+      security:
+        - clerkAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated secret
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecretMeta"
+
+  /secrets/{id}/archive:
+    patch:
+      operationId: toggleArchiveSecret
+      tags: [secrets]
+      summary: Toggle archive status
+      security:
+        - clerkAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated secret
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecretMeta"
+
+  /secrets/{id}/access:
+    post:
+      operationId: recordSecretAccess
+      tags: [secrets]
+      summary: Record that a secret was viewed
+      security:
+        - clerkAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+
+  # Activity logs
+  /activity:
+    get:
+      operationId: listActivity
+      tags: [activity]
+      summary: List activity log entries
+      security:
+        - clerkAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of activity entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityEntry"
+
+  # Dashboard / stats
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard statistics
+      security:
+        - clerkAuth: []
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/recent-secrets:
+    get:
+      operationId: getRecentSecrets
+      tags: [dashboard]
+      summary: Get recently accessed secrets
+      security:
+        - clerkAuth: []
+      responses:
+        "200":
+          description: Recently accessed secrets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SecretMeta"
+
+  /dashboard/security-score:
+    get:
+      operationId: getSecurityScore
+      tags: [dashboard]
+      summary: Get vault security score
+      security:
+        - clerkAuth: []
+      responses:
+        "200":
+          description: Security score details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecurityScore"
+
 components:
+  securitySchemes:
+    clerkAuth:
+      type: http
+      scheme: bearer
+
   schemas:
     HealthStatus:
       type: object
@@ -34,3 +421,265 @@ components:
       required:
         - status
 
+    UserProfile:
+      type: object
+      required: [id, clerkId, email, createdAt]
+      properties:
+        id:
+          type: integer
+        clerkId:
+          type: string
+        email:
+          type: string
+        displayName:
+          type: ["string", "null"]
+        avatarUrl:
+          type: ["string", "null"]
+        vaultLocked:
+          type: boolean
+        autoLockMinutes:
+          type: integer
+        twoFactorEnabled:
+          type: boolean
+        createdAt:
+          type: string
+
+    UserProfileUpdate:
+      type: object
+      properties:
+        displayName:
+          type: string
+        autoLockMinutes:
+          type: integer
+
+    Category:
+      type: object
+      required: [id, name, slug, icon, color, isSystem, secretCount]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        icon:
+          type: string
+        color:
+          type: string
+        isSystem:
+          type: boolean
+        secretCount:
+          type: integer
+
+    CategoryInput:
+      type: object
+      required: [name, icon, color]
+      properties:
+        name:
+          type: string
+        icon:
+          type: string
+        color:
+          type: string
+
+    CategoryUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        icon:
+          type: string
+        color:
+          type: string
+
+    SecretMeta:
+      type: object
+      required: [id, title, categorySlug, categoryName, categoryIcon, categoryColor, isFavorite, isArchived, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        categorySlug:
+          type: string
+        categoryName:
+          type: string
+        categoryIcon:
+          type: string
+        categoryColor:
+          type: string
+        description:
+          type: ["string", "null"]
+        tags:
+          type: array
+          items:
+            type: string
+        isFavorite:
+          type: boolean
+        isArchived:
+          type: boolean
+        expiresAt:
+          type: ["string", "null"]
+        lastAccessedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    Secret:
+      type: object
+      required: [id, title, categorySlug, categoryName, categoryIcon, categoryColor, encryptedValue, isFavorite, isArchived, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        categorySlug:
+          type: string
+        categoryName:
+          type: string
+        categoryIcon:
+          type: string
+        categoryColor:
+          type: string
+        encryptedValue:
+          type: string
+        description:
+          type: ["string", "null"]
+        tags:
+          type: array
+          items:
+            type: string
+        isFavorite:
+          type: boolean
+        isArchived:
+          type: boolean
+        expiresAt:
+          type: ["string", "null"]
+        lastAccessedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    SecretInput:
+      type: object
+      required: [title, categoryId, encryptedValue]
+      properties:
+        title:
+          type: string
+        categoryId:
+          type: integer
+        encryptedValue:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        expiresAt:
+          type: string
+
+    SecretUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        categoryId:
+          type: integer
+        encryptedValue:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        expiresAt:
+          type: ["string", "null"]
+
+    ActivityEntry:
+      type: object
+      required: [id, action, resourceType, createdAt]
+      properties:
+        id:
+          type: integer
+        action:
+          type: string
+        resourceType:
+          type: string
+        resourceId:
+          type: ["integer", "null"]
+        resourceTitle:
+          type: ["string", "null"]
+        ipAddress:
+          type: ["string", "null"]
+        userAgent:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    DashboardStats:
+      type: object
+      required: [totalSecrets, favoriteSecrets, archivedSecrets, expiringSecrets, categoryCounts, recentActivity]
+      properties:
+        totalSecrets:
+          type: integer
+        favoriteSecrets:
+          type: integer
+        archivedSecrets:
+          type: integer
+        expiringSecrets:
+          type: integer
+        categoryCounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryCount"
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityEntry"
+
+    CategoryCount:
+      type: object
+      required: [categorySlug, categoryName, categoryIcon, categoryColor, count]
+      properties:
+        categorySlug:
+          type: string
+        categoryName:
+          type: string
+        categoryIcon:
+          type: string
+        categoryColor:
+          type: string
+        count:
+          type: integer
+
+    SecurityScore:
+      type: object
+      required: [score, grade, checks]
+      properties:
+        score:
+          type: integer
+        grade:
+          type: string
+        checks:
+          type: array
+          items:
+            $ref: "#/components/schemas/SecurityCheck"
+
+    SecurityCheck:
+      type: object
+      required: [name, passed, weight, description]
+      properties:
+        name:
+          type: string
+        passed:
+          type: boolean
+        weight:
+          type: integer
+        description:
+          type: string

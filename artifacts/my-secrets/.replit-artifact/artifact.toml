@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "My Secrets"
+version = "1.0.0"
+id = "artifacts/my-secrets"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23529
+
+[services.development]
+run = "pnpm --filter @workspace/my-secrets run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/my-secrets", "run", "build" ]
+publicDir = "artifacts/my-secrets/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23529"
+BASE_PATH = "/"
